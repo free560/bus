@@ -1,0 +1,28 @@
+# ════════════════════════════════════════════════════════════════
+#   SECURE CHAT — Dépendances compatibles Python 3.14.x
+#   Installer avec : pip install -r requirements.txt
+# ════════════════════════════════════════════════════════════════
+
+# ── Interface graphique ──────────────────────────────────────────
+# Kivy 2.3.x : stable, compatible Python 3.12-3.14
+kivy==2.3.0
+
+# KivyMD 1.1.1 : version exacte demandée (Material Design pour Kivy)
+kivymd==1.1.1
+
+# ── Cryptographie ────────────────────────────────────────────────
+# cryptography 42.x : pleinement compatible Python 3.14
+# Fournit : AES-GCM, PBKDF2, HMAC, etc.
+cryptography==42.0.8
+
+# ── Dépendances indirectes importantes ──────────────────────────
+# cffi : nécessaire pour cryptography (backends natifs C)
+cffi>=1.16.0
+
+# Pillow : requis par Kivy pour le rendu d'images
+Pillow>=10.3.0
+
+# ── Notes de compatibilité Python 3.14 ──────────────────────────
+# Python 3.14 a supprimé certains modules dépréciés (distutils, etc.)
+# Les versions ci-dessus sont toutes compatibles avec ce changement.
+# Si une erreur apparaît sur kivy, essayez : pip install kivy --pre

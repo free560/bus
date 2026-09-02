@@ -1,0 +1,726 @@
+#:kivy 2.3.0
+# ══════════════════════════════════════════════════════════════════════
+#   SECURE_CHAT.KV — FRONTEND KIVYMD 1.1.1
+#   Design professionnel : Noir (#0A0A0A) / Or (#FFD600) / Blanc
+#   Toute la couche visuelle est ici. Aucune logique dans ce fichier.
+# ══════════════════════════════════════════════════════════════════════
+
+# ─── Importations des widgets KivyMD utilisés ─────────────────────────
+#:import MDApp kivymd.app
+#:import MDLabel kivymd.uix.label
+#:import MDTextField kivymd.uix.textfield
+#:import MDRaisedButton kivymd.uix.button
+#:import MDCard kivymd.uix.card
+#:import MDIconButton kivymd.uix.button
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+#:import Animation kivy.animation.Animation
+#:import Clock kivy.clock.Clock
+#:import Window kivy.core.window.Window
+
+# ══════════════════════════════════════════════════════════════════════
+#  WIDGET RACINE : SecureChatLayout
+# ══════════════════════════════════════════════════════════════════════
+<SecureChatLayout>:
+    # Référence aux widgets enfants accessibles depuis main.py
+    scroll_view: scroll_view_id
+    conteneur_messages: conteneur_id
+    champ_message: champ_message_id
+    champ_mdp: champ_mdp_id
+    bouton_envoi: bouton_envoi_id
+    label_statut: label_statut_id
+
+    orientation: 'vertical'
+    spacing: 0
+    md_bg_color: get_color_from_hex("#F5F5F5")  # Fond gris très clair
+
+    # ── 1. HEADER BAR ─────────────────────────────────────────────────
+    HeaderBar:
+        id: header_id
+        size_hint_y: None
+        height: dp(68)
+
+    # ── 2. ZONE DE CHAT SCROLLABLE ────────────────────────────────────
+    ScrollView:
+        id: scroll_view_id
+        do_scroll_x: False
+        do_scroll_y: True
+        bar_width: dp(3)
+        bar_color: get_color_from_hex("#FFD600")
+        bar_inactive_color: get_color_from_hex("#CCCCCC")
+        scroll_type: ['bars', 'content']
+        effect_cls: "ScrollEffect"
+
+        # Fond de la zone de chat (papier légèrement texturé)
+        canvas.before:
+            Color:
+                rgba: get_color_from_hex("#EFEFEF")
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        GridLayout:
+            id: conteneur_id
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            spacing: dp(8)
+            padding: [dp(10), dp(14), dp(10), dp(14)]
+
+    # ── 3. LABEL STATUT (feedback erreur/succès) ──────────────────────
+    Label:
+        id: label_statut_id
+        text: ""
+        size_hint_y: None
+        height: dp(0)          # Caché par défaut (height=0)
+        font_size: sp(11)
+        halign: "center"
+        valign: "middle"
+        color: get_color_from_hex("#E53935")
+        opacity: 0             # Transparent par défaut
+        canvas.before:
+            Color:
+                rgba: get_color_from_hex("#FFEBEE")
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(0)]
+
+    # ── 4. SÉPARATEUR LIGNE D'OR ──────────────────────────────────────
+    Widget:
+        size_hint_y: None
+        height: dp(2)
+        canvas:
+            Color:
+                rgba: get_color_from_hex("#FFD600")
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+    # ── 5. ZONE DE SAISIE ─────────────────────────────────────────────
+    ZoneSaisie:
+        id: zone_saisie_id
+        size_hint_y: None
+        height: dp(148)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  COMPOSANT : HeaderBar
+# ══════════════════════════════════════════════════════════════════════
+<HeaderBar@BoxLayout>:
+    orientation: 'horizontal'
+    padding: [dp(18), dp(10), dp(18), dp(10)]
+    spacing: dp(12)
+
+    # Fond noir du header avec ligne d'or en bas
+    canvas.before:
+        Color:
+            rgba: get_color_from_hex("#0A0A0A")
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        # Ligne d'or décorative (bas du header)
+        Color:
+            rgba: get_color_from_hex("#FFD600")
+        Rectangle:
+            pos: self.x, self.y
+            size: self.width, dp(2.5)
+
+    # ── Icône bouclier ────────────────────────────────────────────────
+    MDIconButton:
+        icon: "shield-lock"
+        theme_icon_color: "Custom"
+        icon_color: get_color_from_hex("#FFD600")
+        size_hint: None, None
+        size: dp(42), dp(42)
+        pos_hint: {"center_y": .5}
+        # Cercle doré autour de l'icône
+        canvas.before:
+            Color:
+                rgba: get_color_from_hex("#FFD600") + [0.15]
+            Ellipse:
+                pos: self.pos
+                size: self.size
+
+    # ── Colonne titre + sous-titre ────────────────────────────────────
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(1)
+        padding: [0, dp(4), 0, dp(4)]
+
+        # Titre principal
+        Label:
+            text: "Secure Chat"
+            font_size: sp(21)
+            bold: True
+            color: get_color_from_hex("#FFFFFF")
+            halign: "left"
+            valign: "middle"
+            size_hint_y: 0.58
+            text_size: self.size
+
+        # Sous-titre technique
+        Label:
+            text: "AES-256-GCM  ·  PBKDF2  ·  Chiffrement local"
+            font_size: sp(9.5)
+            color: get_color_from_hex("#FFD600")
+            halign: "left"
+            valign: "middle"
+            size_hint_y: 0.42
+            text_size: self.size
+
+    # ── Pastille "LIVE" ───────────────────────────────────────────────
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: None
+        width: dp(44)
+        padding: [0, dp(10), 0, dp(10)]
+        spacing: dp(3)
+
+        # Point vert animé
+        Widget:
+            size_hint_y: None
+            height: dp(10)
+            canvas:
+                Color:
+                    rgba: get_color_from_hex("#00E676")
+                Ellipse:
+                    pos: self.center_x - dp(5), self.center_y - dp(5)
+                    size: dp(10), dp(10)
+
+        Label:
+            text: "LIVE"
+            font_size: sp(8)
+            bold: True
+            color: get_color_from_hex("#00E676")
+            halign: "center"
+            valign: "middle"
+            size_hint_y: None
+            height: dp(12)
+            text_size: self.size
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  COMPOSANT : ZoneSaisie — Zone de saisie des messages
+# ══════════════════════════════════════════════════════════════════════
+<ZoneSaisie@BoxLayout>:
+    # Références internes (utilisées dans SecureChatLayout via main.py)
+    champ_message: champ_message_id
+    champ_mdp: champ_mdp_id
+    bouton_envoi: bouton_envoi_id
+
+    orientation: 'vertical'
+    padding: [dp(12), dp(10), dp(12), dp(12)]
+    spacing: dp(8)
+
+    # Fond blanc cassé de la zone de saisie
+    canvas.before:
+        Color:
+            rgba: get_color_from_hex("#FFFFFF")
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    # ── Ligne 1 : Champ message ───────────────────────────────────────
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: dp(52)
+        spacing: dp(8)
+
+        # Icône message
+        MDIconButton:
+            icon: "message-text-outline"
+            theme_icon_color: "Custom"
+            icon_color: get_color_from_hex("#0A0A0A")
+            size_hint: None, None
+            size: dp(46), dp(46)
+            pos_hint: {"center_y": .5}
+
+        # Champ de saisie message — MDTextField KivyMD 1.1.1
+        MDTextField:
+            id: champ_message_id
+            hint_text: "Tapez votre message sécurisé…"
+            mode: "round"                          # Coins arrondis KivyMD 1.1.1
+            fill_color_normal: get_color_from_hex("#F5F5F5")
+            fill_color_focus: get_color_from_hex("#FFFDE7")
+            text_color_normal: get_color_from_hex("#0A0A0A")
+            text_color_focus: get_color_from_hex("#0A0A0A")
+            hint_text_color_normal: get_color_from_hex("#9E9E9E")
+            hint_text_color_focus: get_color_from_hex("#757575")
+            line_color_normal: get_color_from_hex("#E0E0E0")
+            line_color_focus: get_color_from_hex("#FFD600")
+            active_line: True
+            font_size: sp(14)
+            multiline: False
+            size_hint_y: None
+            height: dp(50)
+
+    # ── Ligne 2 : Mot de passe + Bouton ──────────────────────────────
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: dp(52)
+        spacing: dp(8)
+
+        # Icône cadenas
+        MDIconButton:
+            icon: "key-variant"
+            theme_icon_color: "Custom"
+            icon_color: get_color_from_hex("#FFD600")
+            size_hint: None, None
+            size: dp(46), dp(46)
+            pos_hint: {"center_y": .5}
+
+        # Champ mot de passe — masqué
+        MDTextField:
+            id: champ_mdp_id
+            hint_text: "Mot de passe (min. 6 caractères)…"
+            mode: "round"
+            password: True
+            fill_color_normal: get_color_from_hex("#F5F5F5")
+            fill_color_focus: get_color_from_hex("#FFFDE7")
+            text_color_normal: get_color_from_hex("#0A0A0A")
+            text_color_focus: get_color_from_hex("#0A0A0A")
+            hint_text_color_normal: get_color_from_hex("#9E9E9E")
+            line_color_normal: get_color_from_hex("#E0E0E0")
+            line_color_focus: get_color_from_hex("#FFD600")
+            active_line: True
+            font_size: sp(14)
+            multiline: False
+            size_hint: 0.62, None
+            height: dp(50)
+
+        # ── Bouton ENVOYER ────────────────────────────────────────────
+        MDRaisedButton:
+            id: bouton_envoi_id
+            text: "ENVOYER"
+            font_size: sp(12)
+            bold: True
+            md_bg_color: get_color_from_hex("#FFD600")
+            text_color: get_color_from_hex("#0A0A0A")
+            elevation: 4
+            size_hint: 0.38, None
+            height: dp(50)
+            # Coins très arrondis pour effet "pill"
+            radius: [dp(25), dp(25), dp(25), dp(25)]
+            # Icône flèche dans le bouton
+            icon: "send"
+            icon_color: get_color_from_hex("#0A0A0A")
+            # Effet de survol (assombrit légèrement)
+            on_press:
+                self.md_bg_color = get_color_from_hex("#E6C200")
+            on_release:
+                self.md_bg_color = get_color_from_hex("#FFD600")
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  COMPOSANT : BulleEnvoye — Bulle message envoyé (droite, fond noir)
+# ══════════════════════════════════════════════════════════════════════
+<BulleEnvoye@BoxLayout>:
+    # Propriétés exposées (remplies depuis main.py)
+    texte_original: ""
+    texte_chiffre: ""
+    texte_dechiffre: ""
+    horodatage: ""
+
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: self.minimum_height
+    padding: [dp(50), dp(4), dp(6), dp(4)]  # Décalage gauche → aligne à droite
+
+    Widget:
+        # Espaceur gauche flexible pour pousser la bulle à droite
+        size_hint_x: 1
+
+    # ── Carte de la bulle ─────────────────────────────────────────────
+    MDCard:
+        orientation: 'vertical'
+        size_hint_x: None
+        width: min(dp(290), root.width * 0.78) if root else dp(270)
+        size_hint_y: None
+        height: self.minimum_height
+        padding: [dp(14), dp(12), dp(14), dp(10)]
+        spacing: dp(6)
+        radius: [dp(18), dp(4), dp(18), dp(18)]   # Coin bas-droite plat
+        elevation: 3
+        md_bg_color: get_color_from_hex("#0A0A0A")  # FOND NOIR
+
+        # ── Badge "ENVOYÉ" ────────────────────────────────────────────
+        BoxLayout:
+            size_hint_y: None
+            height: dp(18)
+            spacing: dp(6)
+
+            Label:
+                text: "↗  ENVOYÉ"
+                font_size: sp(8.5)
+                bold: True
+                color: get_color_from_hex("#FFD600")
+                halign: "left"
+                text_size: self.size
+                size_hint_y: None
+                height: dp(18)
+
+            Label:
+                text: root.horodatage
+                font_size: sp(8)
+                color: get_color_from_hex("#888888")
+                halign: "right"
+                text_size: self.size
+                size_hint_y: None
+                height: dp(18)
+
+        # ── Séparateur doré ───────────────────────────────────────────
+        Widget:
+            size_hint_y: None
+            height: dp(1)
+            canvas:
+                Color:
+                    rgba: get_color_from_hex("#FFD600") + [0.3]
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+        # ── Section 1 : Message original ──────────────────────────────
+        Label:
+            text: "✉  Message original"
+            font_size: sp(8.5)
+            color: get_color_from_hex("#FFD600")
+            bold: True
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        Label:
+            text: root.texte_original
+            font_size: sp(15)
+            color: get_color_from_hex("#FFFFFF")
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        # ── Section 2 : Message chiffré ───────────────────────────────
+        Label:
+            text: "🔒  Chiffré AES-256-GCM"
+            font_size: sp(8.5)
+            color: get_color_from_hex("#4FC3F7")
+            bold: True
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        Label:
+            text: root.texte_chiffre
+            font_size: sp(9)
+            color: get_color_from_hex("#AAAAAA")
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+            # Police monospace pour le Base64
+            font_name: "RobotoMono"
+
+        # ── Section 3 : Message déchiffré ─────────────────────────────
+        Label:
+            text: "🔓  Déchiffré avec succès"
+            font_size: sp(8.5)
+            color: get_color_from_hex("#69F0AE")
+            bold: True
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        Label:
+            text: root.texte_dechiffre
+            font_size: sp(14)
+            bold: True
+            color: get_color_from_hex("#FFFFFF")
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  COMPOSANT : BulleRecu — Bulle message reçu (gauche, fond or)
+# ══════════════════════════════════════════════════════════════════════
+<BulleRecu@BoxLayout>:
+    texte_original: ""
+    texte_chiffre: ""
+    texte_dechiffre: ""
+    horodatage: ""
+
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: self.minimum_height
+    padding: [dp(6), dp(4), dp(50), dp(4)]  # Décalage droite → aligne à gauche
+
+    # ── Carte de la bulle ─────────────────────────────────────────────
+    MDCard:
+        orientation: 'vertical'
+        size_hint_x: None
+        width: min(dp(290), root.width * 0.78) if root else dp(270)
+        size_hint_y: None
+        height: self.minimum_height
+        padding: [dp(14), dp(12), dp(14), dp(10)]
+        spacing: dp(6)
+        radius: [dp(4), dp(18), dp(18), dp(18)]   # Coin haut-gauche plat
+        elevation: 3
+        md_bg_color: get_color_from_hex("#FFD600")  # FOND OR
+
+        # ── Badge "REÇU" ──────────────────────────────────────────────
+        BoxLayout:
+            size_hint_y: None
+            height: dp(18)
+            spacing: dp(6)
+
+            Label:
+                text: "↙  REÇU"
+                font_size: sp(8.5)
+                bold: True
+                color: get_color_from_hex("#0A0A0A")
+                halign: "left"
+                text_size: self.size
+                size_hint_y: None
+                height: dp(18)
+
+            Label:
+                text: root.horodatage
+                font_size: sp(8)
+                color: get_color_from_hex("#444444")
+                halign: "right"
+                text_size: self.size
+                size_hint_y: None
+                height: dp(18)
+
+        # ── Séparateur sombre ─────────────────────────────────────────
+        Widget:
+            size_hint_y: None
+            height: dp(1)
+            canvas:
+                Color:
+                    rgba: get_color_from_hex("#0A0A0A") + [0.25]
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+        # ── Section 1 : Message original ──────────────────────────────
+        Label:
+            text: "✉  Message original"
+            font_size: sp(8.5)
+            color: get_color_from_hex("#333333")
+            bold: True
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        Label:
+            text: root.texte_original
+            font_size: sp(15)
+            color: get_color_from_hex("#0A0A0A")
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        # ── Section 2 : Message chiffré ───────────────────────────────
+        Label:
+            text: "🔒  Chiffré AES-256-GCM"
+            font_size: sp(8.5)
+            color: get_color_from_hex("#1565C0")
+            bold: True
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        Label:
+            text: root.texte_chiffre
+            font_size: sp(9)
+            color: get_color_from_hex("#444444")
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        # ── Section 3 : Message déchiffré ─────────────────────────────
+        Label:
+            text: "🔓  Déchiffré avec succès"
+            font_size: sp(8.5)
+            color: get_color_from_hex("#1B5E20")
+            bold: True
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        Label:
+            text: root.texte_dechiffre
+            font_size: sp(14)
+            bold: True
+            color: get_color_from_hex("#0A0A0A")
+            halign: "left"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  COMPOSANT : BulleErreur — Notification d'erreur inline
+# ══════════════════════════════════════════════════════════════════════
+<BulleErreur@BoxLayout>:
+    texte_erreur: ""
+
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(42)
+    padding: [dp(16), dp(8), dp(16), dp(8)]
+
+    canvas.before:
+        Color:
+            rgba: get_color_from_hex("#FFEBEE")
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(10), dp(10), dp(10), dp(10)]
+        # Bordure gauche rouge (indicateur visuel)
+        Color:
+            rgba: get_color_from_hex("#E53935")
+        RoundedRectangle:
+            pos: self.pos
+            size: dp(4), self.height
+            radius: [dp(2)]
+
+    MDIconButton:
+        icon: "alert-circle-outline"
+        theme_icon_color: "Custom"
+        icon_color: get_color_from_hex("#E53935")
+        size_hint: None, None
+        size: dp(30), dp(30)
+        pos_hint: {"center_y": .5}
+
+    Label:
+        text: root.texte_erreur
+        font_size: sp(12)
+        color: get_color_from_hex("#B71C1C")
+        halign: "left"
+        valign: "middle"
+        text_size: self.size
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  COMPOSANT : EcranBienvenue — Accueil informatif
+# ══════════════════════════════════════════════════════════════════════
+<EcranBienvenue@BoxLayout>:
+    orientation: 'vertical'
+    size_hint_y: None
+    height: dp(200)
+    padding: [dp(24), dp(20), dp(24), dp(20)]
+    spacing: dp(10)
+
+    canvas.before:
+        Color:
+            rgba: get_color_from_hex("#FFFFFF")
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16), dp(16), dp(16), dp(16)]
+        # Bordure dorée subtile
+        Color:
+            rgba: get_color_from_hex("#FFD600") + [0.6]
+        Line:
+            rounded_rectangle: self.x, self.y, self.width, self.height, dp(16)
+            width: 1.5
+
+    # Icône centrale
+    MDIconButton:
+        icon: "shield-lock-outline"
+        theme_icon_color: "Custom"
+        icon_color: get_color_from_hex("#FFD600")
+        size_hint: None, None
+        size: dp(60), dp(60)
+        pos_hint: {"center_x": .5}
+        font_size: dp(36)
+
+    # Titre
+    Label:
+        text: "[b]Bienvenue dans Secure Chat[/b]"
+        font_size: sp(17)
+        markup: True
+        color: get_color_from_hex("#0A0A0A")
+        halign: "center"
+        text_size: self.width, None
+        size_hint_y: None
+        height: self.texture_size[1]
+
+    # Description
+    Label:
+        text: (
+            "Vos messages sont chiffrés localement\n"
+            "avec [b]AES-256-GCM[/b] avant tout affichage.\n"
+            "Entrez un message et un mot de passe pour commencer."
+        )
+        font_size: sp(12)
+        markup: True
+        color: get_color_from_hex("#555555")
+        halign: "center"
+        text_size: self.width, None
+        size_hint_y: None
+        height: self.texture_size[1]
+
+    # Badges de sécurité
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: dp(26)
+        spacing: dp(8)
+        padding: [dp(20), 0, dp(20), 0]
+
+        # Badge AES-256
+        Label:
+            text: "  AES-256  "
+            font_size: sp(9)
+            bold: True
+            color: get_color_from_hex("#0A0A0A")
+            canvas.before:
+                Color:
+                    rgba: get_color_from_hex("#FFD600")
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(10)]
+
+        # Badge GCM
+        Label:
+            text: "  GCM  "
+            font_size: sp(9)
+            bold: True
+            color: get_color_from_hex("#FFFFFF")
+            canvas.before:
+                Color:
+                    rgba: get_color_from_hex("#0A0A0A")
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(10)]
+
+        # Badge PBKDF2
+        Label:
+            text: "  PBKDF2  "
+            font_size: sp(9)
+            bold: True
+            color: get_color_from_hex("#0A0A0A")
+            canvas.before:
+                Color:
+                    rgba: get_color_from_hex("#FFD600") + [0.5]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(10)]
